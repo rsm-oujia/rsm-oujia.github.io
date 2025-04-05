@@ -1,0 +1,15 @@
+---
+title: "Ouwen Jia"
+image: "owen_pic.jpg"
+about: 
+  template: jolla
+  links:
+    - icon: envelope
+      href: mailto:oujia@ucsd.edu
+    - icon: linkedin
+      href: https://www.linkedin.com/in/owen-jia-984422325/
+    - icon: instagram
+      href: https://www.instagram.com/owenjia1004
+---
+
+Hi this is Owen, welcome to my website.
