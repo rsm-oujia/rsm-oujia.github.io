@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project 1 – Matching Donations Study (Enhanced)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 2em;
+      line-height: 1.6;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    code, pre {
+      background-color: #f4f4f4;
+      padding: 0.5em;
+      display: block;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+<p>
+---
+title: "Matching Donations and Charitable Giving: A Replication Study"
+author: "Ouwen Jia"
+format: html
+jupyter: python3
+---</p><p><h2>Introduction</h2></p><p>Charitable organizations often experiment with matching donation offers to encourage more contributions from potential donors. But does increasing the matching ratio always lead to more giving? This project replicates key findings from Karlan and List (2007), who conducted a large-scale field experiment using over 50,000 fundraising letters.</p><p>Our goal is to revisit their central question using the provided dataset and modern Python tools. We focus on both the overall treatment effect and explore whether different matching ratios (1:1, 2:1, 3:1) influence donor behavior differently.</p><p><h2>Data Overview</h2></p><p>We use the dataset released alongside the study, which includes individual-level data on treatment assignment, prior donation behavior, demographic proxies, and outcomes of interest.</p><p>```{python echo=False}
+import pandas as pd</p><p><h1>Load the dataset</h1>
+df = pd.read_stata("karlan_list_2007.dta")</p><p><h1>Basic variable check</h1>
+df[["treatment", "gave", "amount", "ratio", "size", "ask"]].head()
+```</p><p>We focus on two main outcomes: whether a donation was made (`gave`), and the amount donated (`amount`). Treatment groups were assigned different match ratios and solicitation wordings.</p><p><h2>Exploratory Data Analysis</h2></p><p><h3>Treatment vs. Control: Donation Rates</h3></p><p>```{python echo=False}
+import matplotlib.pyplot as plt</p><p><h1>Compare donation rates by treatment group</h1>
+summary = df.groupby("treatment").agg(response_rate=("gave", "mean")).reset_index()
+plt.bar(["Control", "Treatment"], summary["response_rate"], color=["#6baed6", "#fd8d3c"])
+plt.title("Donation Rate: Treatment vs Control")
+plt.ylabel("Proportion Donating")
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.show()
+```</p><p>The figure shows a higher donation rate among individuals in the treatment group who received a matching offer.</p><p><h3>Match Ratio Effects (1:1 vs. 2:1 vs. 3:1)</h3></p><p>```{python echo=False}
+import seaborn as sns</p><p><h1>Only among treated</h1>
+treated = df[df['treatment'] == 1]
+ratio_summary = treated.groupby("ratio").agg(response_rate=("gave", "mean")).reset_index()</p><p>sns.barplot(data=ratio_summary, x="ratio", y="response_rate", palette="Set2")
+plt.title("Donation Rate by Match Ratio")
+plt.ylabel("Donation Rate")
+plt.xlabel("Match Ratio")
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.show()
+```</p><p>While all match ratios outperform the control group, increasing the match beyond 1:1 offers diminishing returns.</p><p><h2>Regression Analysis</h2></p><p>To quantify the treatment effect, we fit a logistic regression where the dependent variable is whether an individual donated.</p><p>```{python echo=False}
+import statsmodels.api as sm
+import statsmodels.formula.api as smf</p><p>model = smf.logit("gave ~ treatment + ratio2 + ratio3", data=df).fit()
+```</p><p>```{python echo=False}
+<h1>Clean output</h1>
+model.summary2().tables[1].round(3)
+```</p><p>The results confirm that the matching treatment significantly increases the probability of donating, while higher match ratios (2:1, 3:1) do not show significant improvements compared to the baseline 1:1.</p><p><h2>Heterogeneous Effects</h2></p><p>The original study notes differences based on political context. We replicate this by comparing red vs. blue states:</p><p>```{python echo=False}
+df["is_red_state"] = df["red0"] > 0.5</p><p>df.groupby("is_red_state").agg(
+    control_rate=("gave", lambda x: x[df["treatment"] == 0].mean()),
+    treatment_rate=("gave", lambda x: x[df["treatment"] == 1].mean())
+)
+```</p><p>We find that individuals in red states responded more to the matching offer, consistent with the original study's heterogeneity findings.</p><p><h2>Conclusion</h2></p><p>In this replication, we confirm that matching donations do significantly raise response rates. However, increasing the match ratio does not meaningfully improve donation behavior beyond the basic 1:1 match. These findings support the original study and offer important implications for fundraising strategies.
+</p>
+</body>
+</html>
