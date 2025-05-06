@@ -96,7 +96,7 @@ data %>%
 
 On average, customers are older firms. Age may therefore be a confounding factor when evaluating patent success.
 
-### Summary
+#### Summary
 
 While customers have more patents on average, they also differ in age and region. These structural differences suggest we should adjust for confounding variables in any attempt to infer a causal impact of Blueprinty's software.
 
@@ -227,7 +227,15 @@ summary(glm_model)
 
 #### Interpretation
 
-The coefficient on `iscustomer` indicates the log change in expected patents associated with using Blueprinty's software, controlling for age and region. Since this is a log link, exponentiating the coefficient gives a multiplicative effect.
+This Poisson regression estimates the expected number of patents awarded to firms as a function of age, age squared, region, and Blueprinty software usage. Key insights include:
+
+-   **age**: The coefficient is positive and highly significant. This suggests that older firms tend to have more patents, all else equal. Specifically, a one-year increase in firm age is associated with an expected increase in patents by a factor of `exp(0.1486) ≈ 1.160` (or about a 16% increase).
+
+-   **I(age²)**: The negative and significant coefficient on age squared indicates a concave (inverted U-shaped) relationship. This means that the rate of increase in patents slows down for very old firms.
+
+-   **region**: None of the regional dummy variables (Northeast, Northwest, South, Southwest) are statistically significant. This implies that — after controlling for age and Blueprinty usage — there are no strong regional differences in patent counts.
+
+-   **iscustomerCustomer**: The coefficient is **positive and highly significant** (`p < 0.001`). Using Blueprinty's software is associated with an increase in the expected number of patents. The estimated coefficient `0.208` corresponds to a **23.1% increase** in expected patent count (`exp(0.208) ≈ 1.231`).
 
 #### Predictive Comparison: Blueprinty vs Non-Customer
 
@@ -276,4 +284,83 @@ AirBnB is a popular platform for booking short-term rentals. In March 2017, stud
 ```
 :::
 
-*todo: Assume the number of reviews is a good proxy for the number of bookings. Perform some exploratory data analysis to get a feel for the data, handle or drop observations with missing values on relevant variables, build one or more models (e.g., a poisson regression model for the number of bookings as proxied by the number of reviews), and interpret model coefficients to describe variation in the number of reviews as a function of the variables provided.*{r patent-summary} data %\>% group_by(iscustomer) %\>% summarise( count = n(), mean_patents = mean(patents), sd_patents = sd(patents) )
+### Exploratory Data Analysis
+
+```{r load-data-airbnb}
+airbnb <- read_csv("airbnb.csv")
+
+glimpse(airbnb)
+summary(airbnb)
+```
+
+### Data Cleaning
+
+```{r clean-data}
+# Drop rows with missing values in relevant columns
+airbnb_clean <- airbnb %>%
+  filter(
+    !is.na(number_of_reviews),
+    !is.na(review_scores_cleanliness),
+    !is.na(review_scores_location),
+    !is.na(review_scores_value),
+    !is.na(bathrooms),
+    !is.na(bedrooms),
+    !is.na(price)
+  ) %>%
+  mutate(
+    instant_bookable = ifelse(instant_bookable == "t", 1, 0),
+    room_type = as.factor(room_type)
+  )
+
+summary(airbnb_clean)
+```
+
+### Distribution of Reviews
+
+```{r hist-reviews}
+ggplot(airbnb_clean, aes(x = number_of_reviews)) +
+  geom_histogram(bins = 50, fill = "steelblue", alpha = 0.7) +
+  labs(title = "Distribution of Number of Reviews", x = "Number of Reviews", y = "Count") +
+  theme_minimal()
+```
+
+### Poisson Regression Model
+
+```{r poisson-model}
+model <- glm(number_of_reviews ~ days + price + bedrooms + bathrooms +
+               review_scores_cleanliness + review_scores_location +
+               review_scores_value + instant_bookable + room_type,
+             family = poisson(link = "log"),
+             data = airbnb_clean)
+
+summary(model)
+```
+
+### Interpretation
+
+The Poisson regression model estimates how various listing characteristics influence the expected number of reviews (used as a proxy for bookings). Below are key takeaways:
+
+-   **days**: Longer-listed properties tend to receive more reviews. Each additional day on the platform increases expected reviews by a factor of `exp(4.962e-05) ≈ 1.00005`.
+
+-   **price**: Listings with higher nightly prices receive fewer reviews. The negative and significant coefficient suggests price sensitivity.
+
+-   **bedrooms**: Each additional bedroom increases expected reviews by approximately 7.8% (`exp(0.0756) ≈ 1.0785`).
+
+-   **bathrooms**: Surprisingly, more bathrooms are associated with fewer reviews, which may reflect multicollinearity or data-specific effects.
+
+-   **review_scores_cleanliness**: A 1-point increase in cleanliness rating is associated with a 12% increase in expected reviews (`exp(0.1138) ≈ 1.12`).
+
+-   **review_scores_location** and **review_scores_value**: These have negative coefficients, which may suggest correlation with other factors or overcontrol in the model.
+
+-   **room_type**:
+
+    -   *Private room*: Increases reviews slightly compared to entire homes (`exp(0.0213) ≈ 1.0215`).
+    -   *Shared room*: Associated with significantly fewer reviews (`exp(-0.2172) ≈ 0.805`).
+
+-   **instant_bookable**: Dropped from the model due to collinearity, indicating redundancy or lack of variation.
+
+### Conclusion
+
+The analysis shows that Airbnb listings receive more reviews (bookings) when they are: - More affordable, - Cleaner, - Have more bedrooms, - And are listed longer.
+
+Room type also matters—private rooms perform slightly better than shared rooms in terms of review volume. Hosts looking to improve booking outcomes should focus on cleanliness, pricing, and overall presentation to prospective guests.

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Ouwen Jia">
-<meta name="dcterms.date" content="2025-05-05">
+<meta name="dcterms.date" content="2025-05-06">
 
 <title>Poisson Regression Examples – quarto_website</title>
 <style>
@@ -185,13 +185,18 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   <li><a href="#estimation-of-simple-poisson-model" id="toc-estimation-of-simple-poisson-model" class="nav-link" data-scroll-target="#estimation-of-simple-poisson-model">Estimation of Simple Poisson Model</a></li>
   <li><a href="#estimation-of-poisson-regression-model" id="toc-estimation-of-poisson-regression-model" class="nav-link" data-scroll-target="#estimation-of-poisson-regression-model">Estimation of Poisson Regression Model</a></li>
   </ul></li>
   <li><a href="#airbnb-case-study" id="toc-airbnb-case-study" class="nav-link" data-scroll-target="#airbnb-case-study">AirBnB Case Study</a>
   <ul class="collapse">
   <li><a href="#introduction-1" id="toc-introduction-1" class="nav-link" data-scroll-target="#introduction-1">Introduction</a></li>
+  <li><a href="#exploratory-data-analysis" id="toc-exploratory-data-analysis" class="nav-link" data-scroll-target="#exploratory-data-analysis">Exploratory Data Analysis</a></li>
+  <li><a href="#data-cleaning" id="toc-data-cleaning" class="nav-link" data-scroll-target="#data-cleaning">Data Cleaning</a></li>
+  <li><a href="#distribution-of-reviews" id="toc-distribution-of-reviews" class="nav-link" data-scroll-target="#distribution-of-reviews">Distribution of Reviews</a></li>
+  <li><a href="#poisson-regression-model" id="toc-poisson-regression-model" class="nav-link" data-scroll-target="#poisson-regression-model">Poisson Regression Model</a></li>
+  <li><a href="#interpretation-1" id="toc-interpretation-1" class="nav-link" data-scroll-target="#interpretation-1">Interpretation</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -218,7 +223,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 5, 2025</p>
+      <p class="date">May 6, 2025</p>
     </div>
   </div>
   
@@ -334,10 +339,10 @@ window.Quarto = {
 </div>
 <p>On average, customers are older firms. Age may therefore be a confounding factor when evaluating patent success.</p>
 </section>
-</section>
-<section id="summary" class="level3">
-<h3 class="anchored" data-anchor-id="summary">Summary</h3>
+<section id="summary" class="level4">
+<h4 class="anchored" data-anchor-id="summary">Summary</h4>
 <p>While customers have more patents on average, they also differ in age and region. These structural differences suggest we should adjust for confounding variables in any attempt to infer a causal impact of Blueprinty’s software.</p>
+</section>
 </section>
 <section id="estimation-of-simple-poisson-model" class="level3">
 <h3 class="anchored" data-anchor-id="estimation-of-simple-poisson-model">Estimation of Simple Poisson Model</h3>
@@ -400,14 +405,146 @@ window.Quarto = {
 <section id="estimation-of-poisson-regression-model" class="level3">
 <h3 class="anchored" data-anchor-id="estimation-of-poisson-regression-model">Estimation of Poisson Regression Model</h3>
 <p>Next, we extend our simple Poisson model to a Poisson Regression Model such that <span class="math inline">\(Y_i = \text{Poisson}(\lambda_i)\)</span> where <span class="math inline">\(\lambda_i = \exp(X_i'\beta)\)</span>. The interpretation is that the success rate of patent awards is not constant across all firms (<span class="math inline">\(\lambda\)</span>) but rather is a function of firm characteristics <span class="math inline">\(X_i\)</span>. Specifically, we will use the covariates age, age squared, region, and whether the firm is a customer of Blueprinty.</p>
-<p><em>todo: Update your likelihood or log-likelihood function with an additional argument to take in a covariate matrix X. Also change the parameter of the model from lambda to the beta vector. In this model, lambda must be a positive number, so we choose the inverse link function g_inv() to be exp() so that</em> <span class="math inline">\(\lambda_i = e^{X_i'\beta}\)</span>. <em>For example:</em></p>
-<pre><code>poisson_regression_likelihood &lt;- function(beta, Y, X){
-   ...
-}</code></pre>
-<p><em>todo: Use your function along with R’s optim() or Python’s sp.optimize() to find the MLE vector and the Hessian of the Poisson model with covariates. Specifically, the first column of X should be all 1’s to enable a constant term in the model, and the subsequent columns should be age, age squared, binary variables for all but one of the regions, and the binary customer variable. Use the Hessian to find standard errors of the beta parameter estimates and present a table of coefficients and standard errors.</em></p>
-<p><em>todo: Check your results using R’s glm() function or Python sm.GLM() function.</em></p>
-<p><em>todo: Interpret the results.</em></p>
-<p><em>todo: What do you conclude about the effect of Blueprinty’s software on patent success? Because the beta coefficients are not directly interpretable, it may help to create two fake datasets: X_0 and X_1 where X_0 is the X data but with iscustomer=0 for every observation and X_1 is the X data but with iscustomer=1 for every observation. Then, use X_0 and your fitted model to get the vector of predicted number of patents (y_pred_0) for every firm in the dataset, and use X_1 to get Y_pred_1 for every firm. Then subtract y_pred_1 minus y_pred_0 and take the average of that vector of differences.</em></p>
+<section id="log-likelihood-function-with-covariates" class="level4">
+<h4 class="anchored" data-anchor-id="log-likelihood-function-with-covariates">Log-Likelihood Function with Covariates</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>poisson_regression_loglik <span class="ot">&lt;-</span> <span class="cf">function</span>(beta, Y, X) {</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  lambda <span class="ot">&lt;-</span> <span class="fu">exp</span>(X <span class="sc">%*%</span> beta)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">dpois</span>(Y, lambda, <span class="at">log =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="creating-covariate-matrix-x" class="level4">
+<h4 class="anchored" data-anchor-id="creating-covariate-matrix-x">Creating Covariate Matrix X</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Age and age squared</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age_sq =</span> age<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># One-hot encode region (drop 1 category)</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>region_dummies <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> region, <span class="at">data =</span> data)[, <span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Final covariate matrix: intercept, age, age_sq, region dummies, customer</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">intercept =</span> <span class="dv">1</span>,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">age =</span> data<span class="sc">$</span>age,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">age_sq =</span> data<span class="sc">$</span>age_sq,</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  region_dummies,</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">iscustomer =</span> <span class="fu">as.numeric</span>(data<span class="sc">$</span>iscustomer <span class="sc">==</span> <span class="st">"Customer"</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> data<span class="sc">$</span>patents</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="find-mle-and-standard-errors-via-optim" class="level4">
+<h4 class="anchored" data-anchor-id="find-mle-and-standard-errors-via-optim">Find MLE and Standard Errors via <code>optim()</code></h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>loglik_wrapper <span class="ot">&lt;-</span> <span class="cf">function</span>(beta) <span class="sc">-</span><span class="fu">poisson_regression_loglik</span>(beta, Y, X)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial guess</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>beta_init <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">ncol</span>(X))</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Optimize</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>opt_result <span class="ot">&lt;-</span> <span class="fu">optim</span>(<span class="at">par =</span> beta_init, <span class="at">fn =</span> loglik_wrapper, <span class="at">hessian =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">"BFGS"</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Coefficients</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>beta_hat <span class="ot">&lt;-</span> opt_result<span class="sc">$</span>par</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard errors from Hessian</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>hess_inv <span class="ot">&lt;-</span> <span class="fu">solve</span>(opt_result<span class="sc">$</span>hessian)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>se_hat <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(hess_inv))</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary table</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">Term =</span> <span class="fu">colnames</span>(X),</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">Estimate =</span> beta_hat,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">StdError =</span> se_hat</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>coef_table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Term     Estimate     StdError
+1       intercept -0.125735914 0.1122180345
+2             age  0.115793715 0.0063574229
+3          age_sq -0.002228748 0.0000771291
+4 regionNortheast -0.024556782 0.0433762879
+5 regionNorthwest -0.034827790 0.0529311002
+6     regionSouth -0.005441860 0.0524007440
+7 regionSouthwest -0.037784109 0.0471722463
+8      iscustomer  0.060665584 0.0320588299</code></pre>
+</div>
+</div>
+</section>
+<section id="check-using-glm-in-r" class="level4">
+<h4 class="anchored" data-anchor-id="check-using-glm-in-r">Check Using <code>glm()</code> in R</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>glm_model <span class="ot">&lt;-</span> <span class="fu">glm</span>(patents <span class="sc">~</span> age <span class="sc">+</span> <span class="fu">I</span>(age<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> region <span class="sc">+</span> iscustomer,</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data =</span> data)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(glm_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = patents ~ age + I(age^2) + region + iscustomer, 
+    family = poisson(link = "log"), data = data)
+
+Coefficients:
+                    Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)        -0.508920   0.183179  -2.778  0.00546 ** 
+age                 0.148619   0.013869  10.716  &lt; 2e-16 ***
+I(age^2)           -0.002971   0.000258 -11.513  &lt; 2e-16 ***
+regionNortheast     0.029170   0.043625   0.669  0.50372    
+regionNorthwest    -0.017574   0.053781  -0.327  0.74383    
+regionSouth         0.056561   0.052662   1.074  0.28281    
+regionSouthwest     0.050576   0.047198   1.072  0.28391    
+iscustomerCustomer  0.207591   0.030895   6.719 1.83e-11 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 2362.5  on 1499  degrees of freedom
+Residual deviance: 2143.3  on 1492  degrees of freedom
+AIC: 6532.1
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+</div>
+</section>
+<section id="interpretation" class="level4">
+<h4 class="anchored" data-anchor-id="interpretation">Interpretation</h4>
+<p>This Poisson regression estimates the expected number of patents awarded to firms as a function of age, age squared, region, and Blueprinty software usage. Key insights include:</p>
+<ul>
+<li><p><strong>age</strong>: The coefficient is positive and highly significant. This suggests that older firms tend to have more patents, all else equal. Specifically, a one-year increase in firm age is associated with an expected increase in patents by a factor of <code>exp(0.1486) ≈ 1.160</code> (or about a 16% increase).</p></li>
+<li><p><strong>I(age²)</strong>: The negative and significant coefficient on age squared indicates a concave (inverted U-shaped) relationship. This means that the rate of increase in patents slows down for very old firms.</p></li>
+<li><p><strong>region</strong>: None of the regional dummy variables (Northeast, Northwest, South, Southwest) are statistically significant. This implies that — after controlling for age and Blueprinty usage — there are no strong regional differences in patent counts.</p></li>
+<li><p><strong>iscustomerCustomer</strong>: The coefficient is <strong>positive and highly significant</strong> (<code>p &lt; 0.001</code>). Using Blueprinty’s software is associated with an increase in the expected number of patents. The estimated coefficient <code>0.208</code> corresponds to a <strong>23.1% increase</strong> in expected patent count (<code>exp(0.208) ≈ 1.231</code>).</p></li>
+</ul>
+</section>
+<section id="predictive-comparison-blueprinty-vs-non-customer" class="level4">
+<h4 class="anchored" data-anchor-id="predictive-comparison-blueprinty-vs-non-customer">Predictive Comparison: Blueprinty vs Non-Customer</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create X_0 and X_1 matrices</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>X_0 <span class="ot">&lt;-</span> X</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>X_0[, <span class="st">"iscustomer"</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>X_1 <span class="ot">&lt;-</span> X</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>X_1[, <span class="st">"iscustomer"</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Predicted lambda for each case</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>lambda_0 <span class="ot">&lt;-</span> <span class="fu">exp</span>(X_0 <span class="sc">%*%</span> beta_hat)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>lambda_1 <span class="ot">&lt;-</span> <span class="fu">exp</span>(X_1 <span class="sc">%*%</span> beta_hat)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Predicted difference</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>diff <span class="ot">&lt;-</span> lambda_1 <span class="sc">-</span> lambda_0</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(diff)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.2178843</code></pre>
+</div>
+</div>
+<p>This gives the average expected increase in the number of patents due to using Blueprinty’s software, across all firms in the dataset.</p>
+</section>
 </section>
 </section>
 <section id="airbnb-case-study" class="level2">
@@ -443,7 +580,212 @@ Variable Definitions
 </div>
 </div>
 </div>
-<p><em>todo: Assume the number of reviews is a good proxy for the number of bookings. Perform some exploratory data analysis to get a feel for the data, handle or drop observations with missing values on relevant variables, build one or more models (e.g., a poisson regression model for the number of bookings as proxied by the number of reviews), and interpret model coefficients to describe variation in the number of reviews as a function of the variables provided.</em>{r patent-summary} data %&gt;% group_by(iscustomer) %&gt;% summarise( count = n(), mean_patents = mean(patents), sd_patents = sd(patents) )</p>
+</section>
+<section id="exploratory-data-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="exploratory-data-analysis">Exploratory Data Analysis</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>airbnb <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"airbnb.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>New names:
+Rows: 40628 Columns: 14
+── Column specification
+──────────────────────────────────────────────────────── Delimiter: "," chr
+(3): last_scraped, host_since, room_type dbl (10): ...1, id, days, bathrooms,
+bedrooms, price, number_of_reviews, rev... lgl (1): instant_bookable
+ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+Specify the column types or set `show_col_types = FALSE` to quiet this message.
+• `` -&gt; `...1`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(airbnb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 40,628
+Columns: 14
+$ ...1                      &lt;dbl&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1…
+$ id                        &lt;dbl&gt; 2515, 2595, 3647, 3831, 4611, 5099, 5107, 51…
+$ days                      &lt;dbl&gt; 3130, 3127, 3050, 3038, 3012, 2981, 2981, 29…
+$ last_scraped              &lt;chr&gt; "4/2/2017", "4/2/2017", "4/2/2017", "4/2/201…
+$ host_since                &lt;chr&gt; "9/6/2008", "9/9/2008", "11/25/2008", "12/7/…
+$ room_type                 &lt;chr&gt; "Private room", "Entire home/apt", "Private …
+$ bathrooms                 &lt;dbl&gt; 1, 1, 1, 1, NA, 1, 1, NA, 1, 1, 1, 1, 1, NA,…
+$ bedrooms                  &lt;dbl&gt; 1, 0, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2,…
+$ price                     &lt;dbl&gt; 59, 230, 150, 89, 39, 212, 250, 60, 129, 79,…
+$ number_of_reviews         &lt;dbl&gt; 150, 20, 0, 116, 93, 60, 60, 50, 53, 329, 11…
+$ review_scores_cleanliness &lt;dbl&gt; 9, 9, NA, 9, 9, 9, 10, 8, 9, 7, 10, 9, 9, 9,…
+$ review_scores_location    &lt;dbl&gt; 9, 10, NA, 9, 8, 9, 9, 9, 10, 10, 10, 9, 10,…
+$ review_scores_value       &lt;dbl&gt; 9, 9, NA, 9, 9, 9, 10, 9, 9, 9, 10, 9, 10, 9…
+$ instant_bookable          &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FAL…</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(airbnb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      ...1             id                days       last_scraped      
+ Min.   :    1   Min.   :    2515   Min.   :    1   Length:40628      
+ 1st Qu.:10158   1st Qu.: 4889868   1st Qu.:  542   Class :character  
+ Median :20314   Median : 9862878   Median :  996   Mode  :character  
+ Mean   :20314   Mean   : 9698889   Mean   : 1102                     
+ 3rd Qu.:30471   3rd Qu.:14667894   3rd Qu.: 1535                     
+ Max.   :40628   Max.   :18009669   Max.   :42828                     
+                                                                      
+  host_since         room_type           bathrooms        bedrooms     
+ Length:40628       Length:40628       Min.   :0.000   Min.   : 0.000  
+ Class :character   Class :character   1st Qu.:1.000   1st Qu.: 1.000  
+ Mode  :character   Mode  :character   Median :1.000   Median : 1.000  
+                                       Mean   :1.125   Mean   : 1.147  
+                                       3rd Qu.:1.000   3rd Qu.: 1.000  
+                                       Max.   :8.000   Max.   :10.000  
+                                       NA's   :160     NA's   :76      
+     price         number_of_reviews review_scores_cleanliness
+ Min.   :   10.0   Min.   :  0.0     Min.   : 2.000           
+ 1st Qu.:   70.0   1st Qu.:  1.0     1st Qu.: 9.000           
+ Median :  100.0   Median :  4.0     Median :10.000           
+ Mean   :  144.8   Mean   : 15.9     Mean   : 9.198           
+ 3rd Qu.:  170.0   3rd Qu.: 17.0     3rd Qu.:10.000           
+ Max.   :10000.0   Max.   :421.0     Max.   :10.000           
+                                     NA's   :10195            
+ review_scores_location review_scores_value instant_bookable
+ Min.   : 2.000         Min.   : 2.000      Mode :logical   
+ 1st Qu.: 9.000         1st Qu.: 9.000      FALSE:32759     
+ Median :10.000         Median :10.000      TRUE :7869      
+ Mean   : 9.414         Mean   : 9.332                      
+ 3rd Qu.:10.000         3rd Qu.:10.000                      
+ Max.   :10.000         Max.   :10.000                      
+ NA's   :10254          NA's   :10256                       </code></pre>
+</div>
+</div>
+</section>
+<section id="data-cleaning" class="level3">
+<h3 class="anchored" data-anchor-id="data-cleaning">Data Cleaning</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop rows with missing values in relevant columns</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>airbnb_clean <span class="ot">&lt;-</span> airbnb <span class="sc">%&gt;%</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(number_of_reviews),</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(review_scores_cleanliness),</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(review_scores_location),</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(review_scores_value),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(bathrooms),</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(bedrooms),</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(price)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">instant_bookable =</span> <span class="fu">ifelse</span>(instant_bookable <span class="sc">==</span> <span class="st">"t"</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">room_type =</span> <span class="fu">as.factor</span>(room_type)</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(airbnb_clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      ...1             id                days       last_scraped      
+ Min.   :    1   Min.   :    2515   Min.   :    7   Length:30160      
+ 1st Qu.: 8630   1st Qu.: 4276690   1st Qu.:  584   Class :character  
+ Median :18236   Median : 9149028   Median : 1041   Mode  :character  
+ Mean   :18679   Mean   : 8978287   Mean   : 1140                     
+ 3rd Qu.:28532   3rd Qu.:13914758   3rd Qu.: 1592                     
+ Max.   :40504   Max.   :17973686   Max.   :42828                     
+  host_since                  room_type       bathrooms        bedrooms     
+ Length:30160       Entire home/apt:15543   Min.   :0.000   Min.   : 0.000  
+ Class :character   Private room   :13773   1st Qu.:1.000   1st Qu.: 1.000  
+ Mode  :character   Shared room    :  844   Median :1.000   Median : 1.000  
+                                            Mean   :1.122   Mean   : 1.151  
+                                            3rd Qu.:1.000   3rd Qu.: 1.000  
+                                            Max.   :6.000   Max.   :10.000  
+     price         number_of_reviews review_scores_cleanliness
+ Min.   :   10.0   Min.   :  1.00    Min.   : 2.000           
+ 1st Qu.:   70.0   1st Qu.:  3.00    1st Qu.: 9.000           
+ Median :  103.0   Median :  8.00    Median :10.000           
+ Mean   :  140.2   Mean   : 21.17    Mean   : 9.202           
+ 3rd Qu.:  169.0   3rd Qu.: 26.00    3rd Qu.:10.000           
+ Max.   :10000.0   Max.   :421.00    Max.   :10.000           
+ review_scores_location review_scores_value instant_bookable
+ Min.   : 2.000         Min.   : 2.000      Min.   :0       
+ 1st Qu.: 9.000         1st Qu.: 9.000      1st Qu.:0       
+ Median :10.000         Median :10.000      Median :0       
+ Mean   : 9.415         Mean   : 9.334      Mean   :0       
+ 3rd Qu.:10.000         3rd Qu.:10.000      3rd Qu.:0       
+ Max.   :10.000         Max.   :10.000      Max.   :0       </code></pre>
+</div>
+</div>
+</section>
+<section id="distribution-of-reviews" class="level3">
+<h3 class="anchored" data-anchor-id="distribution-of-reviews">Distribution of Reviews</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(airbnb_clean, <span class="fu">aes</span>(<span class="at">x =</span> number_of_reviews)) <span class="sc">+</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">50</span>, <span class="at">fill =</span> <span class="st">"steelblue"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Distribution of Number of Reviews"</span>, <span class="at">x =</span> <span class="st">"Number of Reviews"</span>, <span class="at">y =</span> <span class="st">"Count"</span>) <span class="sc">+</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="hw2_questions_files/figure-html/hist-reviews-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="poisson-regression-model" class="level3">
+<h3 class="anchored" data-anchor-id="poisson-regression-model">Poisson Regression Model</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">glm</span>(number_of_reviews <span class="sc">~</span> days <span class="sc">+</span> price <span class="sc">+</span> bedrooms <span class="sc">+</span> bathrooms <span class="sc">+</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>               review_scores_cleanliness <span class="sc">+</span> review_scores_location <span class="sc">+</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>               review_scores_value <span class="sc">+</span> instant_bookable <span class="sc">+</span> room_type,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>             <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> airbnb_clean)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = number_of_reviews ~ days + price + bedrooms + bathrooms + 
+    review_scores_cleanliness + review_scores_location + review_scores_value + 
+    instant_bookable + room_type, family = poisson(link = "log"), 
+    data = airbnb_clean)
+
+Coefficients: (1 not defined because of singularities)
+                            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)                3.646e+00  1.595e-02 228.572  &lt; 2e-16 ***
+days                       4.962e-05  4.029e-07 123.163  &lt; 2e-16 ***
+price                     -3.697e-05  8.554e-06  -4.322 1.55e-05 ***
+bedrooms                   7.562e-02  2.005e-03  37.715  &lt; 2e-16 ***
+bathrooms                 -1.105e-01  3.789e-03 -29.163  &lt; 2e-16 ***
+review_scores_cleanliness  1.138e-01  1.489e-03  76.419  &lt; 2e-16 ***
+review_scores_location    -8.086e-02  1.600e-03 -50.527  &lt; 2e-16 ***
+review_scores_value       -9.708e-02  1.795e-03 -54.091  &lt; 2e-16 ***
+instant_bookable                  NA         NA      NA       NA    
+room_typePrivate room      1.213e-02  2.735e-03   4.435 9.19e-06 ***
+room_typeShared room      -2.172e-01  8.616e-03 -25.204  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 961626  on 30159  degrees of freedom
+Residual deviance: 940403  on 30150  degrees of freedom
+AIC: 1061889
+
+Number of Fisher Scoring iterations: 9</code></pre>
+</div>
+</div>
+</section>
+<section id="interpretation-1" class="level3">
+<h3 class="anchored" data-anchor-id="interpretation-1">Interpretation</h3>
+<p>The Poisson regression model estimates how various listing characteristics influence the expected number of reviews (used as a proxy for bookings). Below are key takeaways:</p>
+<ul>
+<li><p><strong>days</strong>: Longer-listed properties tend to receive more reviews. Each additional day on the platform increases expected reviews by a factor of <code>exp(4.962e-05) ≈ 1.00005</code>.</p></li>
+<li><p><strong>price</strong>: Listings with higher nightly prices receive fewer reviews. The negative and significant coefficient suggests price sensitivity.</p></li>
+<li><p><strong>bedrooms</strong>: Each additional bedroom increases expected reviews by approximately 7.8% (<code>exp(0.0756) ≈ 1.0785</code>).</p></li>
+<li><p><strong>bathrooms</strong>: Surprisingly, more bathrooms are associated with fewer reviews, which may reflect multicollinearity or data-specific effects.</p></li>
+<li><p><strong>review_scores_cleanliness</strong>: A 1-point increase in cleanliness rating is associated with a 12% increase in expected reviews (<code>exp(0.1138) ≈ 1.12</code>).</p></li>
+<li><p><strong>review_scores_location</strong> and <strong>review_scores_value</strong>: These have negative coefficients, which may suggest correlation with other factors or overcontrol in the model.</p></li>
+<li><p><strong>room_type</strong>:</p>
+<ul>
+<li><em>Private room</em>: Increases reviews slightly compared to entire homes (<code>exp(0.0213) ≈ 1.0215</code>).</li>
+<li><em>Shared room</em>: Associated with significantly fewer reviews (<code>exp(-0.2172) ≈ 0.805</code>).</li>
+</ul></li>
+<li><p><strong>instant_bookable</strong>: Dropped from the model due to collinearity, indicating redundancy or lack of variation.</p></li>
+</ul>
+</section>
+<section id="conclusion" class="level3">
+<h3 class="anchored" data-anchor-id="conclusion">Conclusion</h3>
+<p>The analysis shows that Airbnb listings receive more reviews (bookings) when they are: - More affordable, - Cleaner, - Have more bedrooms, - And are listed longer.</p>
+<p>Room type also matters—private rooms perform slightly better than shared rooms in terms of review volume. Hosts looking to improve booking outcomes should focus on cleanliness, pricing, and overall presentation to prospective guests.</p>
 
 
 </section>
