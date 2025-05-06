@@ -1,0 +1,99 @@
+---
+title: "Blueprinty Case Study"
+format: html
+editor: visual
+---
+
+## Blueprinty Case Study
+
+### Introduction
+
+Blueprinty is a small software firm that develops tools for creating blueprints used in patent applications. The marketing team wants to make the case that firms using Blueprinty's product are more successful in getting patents approved.
+
+Although we don't have before-and-after data, Blueprinty has collected cross-sectional data on 1,500 mature engineering firms, including number of patents awarded in the last 5 years, region, firm age, and whether or not the firm uses their software.
+
+### Data
+
+```{r load-packages}
+library(ggplot2)
+library(readr)
+library(dplyr)
+```
+
+```{r load-data}
+data <- read_csv("blueprinty.csv")
+
+data <- data %>%
+  mutate(
+    iscustomer = factor(iscustomer, levels = c(0, 1), labels = c("Non-Customer", "Customer"))
+  )
+```
+
+#### 📊 Distribution of Patents by Customer Status
+
+```{r hist-patents}
+ggplot(data, aes(x = patents, fill = iscustomer)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(
+    title = "Number of Patents by Customer Status",
+    x = "Patents (Last 5 Years)",
+    fill = "Customer Status"
+  ) +
+  theme_minimal()
+```
+
+```{r patent-summary}
+data %>%
+  group_by(iscustomer) %>%
+  summarise(
+    count = n(),
+    mean_patents = mean(patents),
+    sd_patents = sd(patents)
+  )
+```
+
+We observe that Blueprinty customers, on average, have more patents over the past five years. However, this comparison does not yet account for potential confounding variables.
+
+#### 🌍 Regional Differences by Customer Status
+
+```{r region-bar}
+ggplot(data, aes(x = region, fill = iscustomer)) +
+  geom_bar(position = "fill") +
+  labs(
+    title = "Regional Distribution by Customer Status",
+    x = "Region",
+    y = "Proportion of Firms",
+    fill = "Customer Status"
+  ) +
+  theme_minimal()
+```
+
+There are noticeable regional differences in customer adoption. Some regions appear to have a higher share of Blueprinty customers.
+
+#### 🕰️ Firm Age Distribution by Customer Status
+
+```{r age-hist}
+ggplot(data, aes(x = age, fill = iscustomer)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(
+    title = "Firm Age Distribution by Customer Status",
+    x = "Age (Years Since Incorporation)",
+    fill = "Customer Status"
+  ) +
+  theme_minimal()
+```
+
+```{r age-summary}
+data %>%
+  group_by(iscustomer) %>%
+  summarise(
+    mean_age = mean(age),
+    sd_age = sd(age)
+  )
+```
+
+On average, customers are older firms. Age may therefore be a confounding factor when evaluating patent success.
+
+### Summary
+
+While customers have more patents on average, they also differ in age and region. These structural differences suggest we should adjust for confounding variables in any attempt to infer a causal impact of Blueprinty's software.
