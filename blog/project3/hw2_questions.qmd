@@ -104,21 +104,53 @@ While customers have more patents on average, they also differ in age and region
 
 Since our outcome variable of interest can only be small integer values per a set unit of time, we can use a Poisson density to model the number of patents awarded to each engineering firm over the last 5 years. We start by estimating a simple Poisson model via Maximum Likelihood.
 
-*todo: Write down mathematically the likelihood for* $Y \sim \text{Poisson}(\lambda)$. Note that $f(Y|\lambda) = e^{-\lambda}\lambda^Y/Y!$.
+The probability mass function for a Poisson distribution is:
 
-*todo: Code the likelihood (or log-likelihood) function for the Poisson model. This is a function of lambda and Y. For example:*
+$f(Y | \lambda) = \frac{e^{-\lambda} \lambda^Y}{Y!}$
 
-```         
-poisson_loglikelihood <- function(lambda, Y){
-   ...
+We treat the observed number of patents as realizations from this distribution.
+
+#### Log-Likelihood Function in R
+
+```{r poisson-loglikelihood}
+# Log-likelihood function for Poisson model
+poisson_loglikelihood <- function(lambda, Y) {
+  if (lambda <= 0) return(-Inf)  # Poisson lambda must be positive
+  sum(dpois(Y, lambda, log = TRUE))
 }
 ```
 
-*todo: Use your function to plot lambda on the horizontal axis and the likelihood (or log-likelihood) on the vertical axis for a range of lambdas (use the observed number of patents as the input for Y).*
+#### Plotting the Log-Likelihood Curve
 
-*todo: If you're feeling mathematical, take the first derivative of your likelihood or log-likelihood, set it equal to zero and solve for lambda. You will find lambda_mle is Ybar, which "feels right" because the mean of a Poisson distribution is lambda.*
+We use the observed number of patents as input to our log-likelihood function.
 
-*todo: Find the MLE by optimizing your likelihood function with optim() in R or sp.optimize() in Python.*
+```{r plot-loglikelihood}
+Y_obs <- data$patents
+lambda_vals <- seq(0.1, 10, by = 0.1)
+loglik_vals <- sapply(lambda_vals, function(l) poisson_loglikelihood(l, Y_obs))
+
+plot(lambda_vals, loglik_vals, type = "l", lwd = 2,
+     main = "Log-Likelihood of Poisson Model",
+     xlab = expression(lambda), ylab = "Log-Likelihood")
+```
+
+#### Maximum Likelihood Estimation (MLE)
+
+We now use `optim()` to find the value of lambda that maximizes the log-likelihood.
+
+```{r poisson-mle}
+mle_result <- optim(par = 1, fn = function(l) -poisson_loglikelihood(l, Y_obs),
+                    method = "Brent", lower = 0.01, upper = 20)
+
+lambda_mle <- mle_result$par
+lambda_mle
+```
+
+The MLE for $\lambda$ is the sample mean of $Y$, which is consistent with theory: for Poisson-distributed data, $\hat{\lambda}_{MLE} = \bar{Y}$.
+
+```{r sample-mean}
+mean(Y_obs)
+```
 
 ### Estimation of Poisson Regression Model
 
