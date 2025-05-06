@@ -16,15 +16,64 @@ However, Blueprinty has collected data on 1,500 mature (non-startup) engineering
 
 
 ### Data
+```{r setup, include=FALSE}
+library(tidyverse)
 
-_todo: Read in data._
+# Read in the data
+data <- read_csv("blueprinty.csv")
 
-_todo: Compare histograms and means of number of patents by customer status. What do you observe?_
+# Convert iscustomer to a factor with labels
+data <- data %>%
+  mutate(iscustomer = factor(iscustomer, levels = c(0,1), labels = c("Non-Customer", "Customer")))
 
-Blueprinty customers are not selected at random. It may be important to account for systematic differences in the age and regional location of customers vs non-customers.
+# Preview the data
+glimpse(data)
+summary(data)
 
-_todo: Compare regions and ages by customer status. What do you observe?_
+ggplot(data, aes(x = patents, fill = iscustomer)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(
+    title = "Number of Patents by Customer Status",
+    x = "Patents (Last 5 Years)",
+    fill = "Customer Status"
+  ) +
+  theme_minimal()
 
+data %>%
+  group_by(iscustomer) %>%
+  summarise(
+    count = n(),
+    mean_patents = mean(patents),
+    sd_patents = sd(patents)
+  )
+
+ggplot(data, aes(x = region, fill = iscustomer)) +
+  geom_bar(position = "fill") +
+  labs(
+    title = "Regional Distribution by Customer Status",
+    x = "Region",
+    y = "Proportion of Firms",
+    fill = "Customer Status"
+  ) +
+  theme_minimal()
+
+ggplot(data, aes(x = age, fill = iscustomer)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(
+    title = "Firm Age Distribution by Customer Status",
+    x = "Age (Years Since Incorporation)",
+    fill = "Customer Status"
+  ) +
+  theme_minimal()
+
+data %>%
+  group_by(iscustomer) %>%
+  summarise(
+    mean_age = mean(age),
+    sd_age = sd(age)
+  )
+
+```
 
 ### Estimation of Simple Poisson Model
 
