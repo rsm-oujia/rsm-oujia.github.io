@@ -156,21 +156,99 @@ mean(Y_obs)
 
 Next, we extend our simple Poisson model to a Poisson Regression Model such that $Y_i = \text{Poisson}(\lambda_i)$ where $\lambda_i = \exp(X_i'\beta)$. The interpretation is that the success rate of patent awards is not constant across all firms ($\lambda$) but rather is a function of firm characteristics $X_i$. Specifically, we will use the covariates age, age squared, region, and whether the firm is a customer of Blueprinty.
 
-*todo: Update your likelihood or log-likelihood function with an additional argument to take in a covariate matrix X. Also change the parameter of the model from lambda to the beta vector. In this model, lambda must be a positive number, so we choose the inverse link function g_inv() to be exp() so that* $\lambda_i = e^{X_i'\beta}$. *For example:*
+#### Log-Likelihood Function with Covariates
 
-```         
-poisson_regression_likelihood <- function(beta, Y, X){
-   ...
+```{r poisson-regression-loglik}
+poisson_regression_loglik <- function(beta, Y, X) {
+  lambda <- exp(X %*% beta)
+  sum(dpois(Y, lambda, log = TRUE))
 }
 ```
 
-*todo: Use your function along with R's optim() or Python's sp.optimize() to find the MLE vector and the Hessian of the Poisson model with covariates. Specifically, the first column of X should be all 1's to enable a constant term in the model, and the subsequent columns should be age, age squared, binary variables for all but one of the regions, and the binary customer variable. Use the Hessian to find standard errors of the beta parameter estimates and present a table of coefficients and standard errors.*
+#### Creating Covariate Matrix X
 
-*todo: Check your results using R's glm() function or Python sm.GLM() function.*
+```{r create-X}
+# Age and age squared
+data <- data %>%
+  mutate(age_sq = age^2)
 
-*todo: Interpret the results.*
+# One-hot encode region (drop 1 category)
+region_dummies <- model.matrix(~ region, data = data)[, -1]
 
-*todo: What do you conclude about the effect of Blueprinty's software on patent success? Because the beta coefficients are not directly interpretable, it may help to create two fake datasets: X_0 and X_1 where X_0 is the X data but with iscustomer=0 for every observation and X_1 is the X data but with iscustomer=1 for every observation. Then, use X_0 and your fitted model to get the vector of predicted number of patents (y_pred_0) for every firm in the dataset, and use X_1 to get Y_pred_1 for every firm. Then subtract y_pred_1 minus y_pred_0 and take the average of that vector of differences.*
+# Final covariate matrix: intercept, age, age_sq, region dummies, customer
+X <- cbind(
+  intercept = 1,
+  age = data$age,
+  age_sq = data$age_sq,
+  region_dummies,
+  iscustomer = as.numeric(data$iscustomer == "Customer")
+)
+
+Y <- data$patents
+```
+
+#### Find MLE and Standard Errors via `optim()`
+
+```{r poisson-regression-optim}
+loglik_wrapper <- function(beta) -poisson_regression_loglik(beta, Y, X)
+
+# Initial guess
+beta_init <- rep(0, ncol(X))
+
+# Optimize
+opt_result <- optim(par = beta_init, fn = loglik_wrapper, hessian = TRUE, method = "BFGS")
+
+# Coefficients
+beta_hat <- opt_result$par
+
+# Standard errors from Hessian
+hess_inv <- solve(opt_result$hessian)
+se_hat <- sqrt(diag(hess_inv))
+
+# Summary table
+coef_table <- data.frame(
+  Term = colnames(X),
+  Estimate = beta_hat,
+  StdError = se_hat
+)
+
+coef_table
+```
+
+#### Check Using `glm()` in R
+
+```{r poisson-glm}
+glm_model <- glm(patents ~ age + I(age^2) + region + iscustomer,
+                 family = poisson(link = "log"),
+                 data = data)
+
+summary(glm_model)
+```
+
+#### Interpretation
+
+The coefficient on `iscustomer` indicates the log change in expected patents associated with using Blueprinty's software, controlling for age and region. Since this is a log link, exponentiating the coefficient gives a multiplicative effect.
+
+#### Predictive Comparison: Blueprinty vs Non-Customer
+
+```{r marginal-effect}
+# Create X_0 and X_1 matrices
+X_0 <- X
+X_0[, "iscustomer"] <- 0
+
+X_1 <- X
+X_1[, "iscustomer"] <- 1
+
+# Predicted lambda for each case
+lambda_0 <- exp(X_0 %*% beta_hat)
+lambda_1 <- exp(X_1 %*% beta_hat)
+
+# Predicted difference
+diff <- lambda_1 - lambda_0
+mean(diff)
+```
+
+This gives the average expected increase in the number of patents due to using Blueprinty's software, across all firms in the dataset.
 
 ## AirBnB Case Study
 
