@@ -16,13 +16,13 @@ However, Blueprinty has collected data on 1,500 mature (non-startup) engineering
 
 ### Data
 
-```{r load-packages}
+```{r load-packages, include=FALSE}
 library(ggplot2)
 library(readr)
 library(dplyr)
 ```
 
-```{r load-data}
+```{r load-data, include=FALSE}
 data <- read_csv("blueprinty.csv")
 
 data <- data %>%
