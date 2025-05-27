@@ -1,7 +1,9 @@
 ---
 title: "Multinomial Logit Model"
-author: Ouwen Jia
+author: "Ouwen Jia"
 date: today
+callout-appearance: minimal # this hides the blue "i" icon on .callout-notes
+editor: visual
 ---
 
 This assignment explores two methods for estimating the MNL model: (1) via Maximum Likelihood, and (2) via a Bayesian approach using a Metropolis-Hastings MCMC algorithm.
