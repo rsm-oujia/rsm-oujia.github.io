@@ -12,6 +12,7 @@ We use the Palmer Penguins dataset, focusing on **bill_length_mm** and **flipper
 
 ```{r}
 penguins <- read.csv("palmer_penguins.csv")
+library(purrr)
 
 # View structure
 str(penguins)
