@@ -11,7 +11,7 @@ date: today
 We use the Palmer Penguins dataset, focusing on **bill_length_mm** and **flipper_length_mm**.
 
 ```{r}
-penguins <- read.csv("project5/palmer_penguins.csv")
+penguins <- read.csv("palmer_penguins.csv")
 
 # View structure
 str(penguins)
