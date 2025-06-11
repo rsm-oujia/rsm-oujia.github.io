@@ -11,7 +11,7 @@ date: today
 We use the Palmer Penguins dataset, focusing on **bill_length_mm** and **flipper_length_mm**.
 
 ```{r}
-penguins <- read.csv("blog/project5/palmer_penguins.csv")
+penguins <- read.csv("project5/palmer_penguins.csv")
 
 # View structure
 str(penguins)
@@ -105,7 +105,7 @@ library(cluster)     # for silhouette()
 library(ggplot2)
 
 # Read and clean the dataset
-penguins_raw <- read.csv("blog/project5/palmer_penguins.csv")
+penguins_raw <- read.csv("palmer_penguins.csv")
 penguins_trimmed <- na.omit(penguins_raw[, c("bill_length_mm", "flipper_length_mm")])
 
 # Initialize empty vectors for WCSS and silhouette scores
