@@ -11,8 +11,15 @@ date: today
 We use the Palmer Penguins dataset, focusing on **bill_length_mm** and **flipper_length_mm**.
 
 ```{r}
-penguins <- read.csv("palmer_penguins.csv")
+install.packages(c("ggplot2", "purrr", "cluster", "class"))
 library(purrr)
+library(ggplot2)
+library(cluster)
+library(class)
+```
+
+```{r}
+penguins <- read.csv("palmer_penguins.csv")
 
 # View structure
 str(penguins)
